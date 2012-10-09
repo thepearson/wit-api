@@ -1,5 +1,7 @@
 <?php
 define('WITXVFB', "/usr/local/bin/wit-capture-xvfb");
+define('CONVERT', "/usr/bin/convert");
+
 $dst_path = "/tmp/";
 $key = "dcc42e8e-11ca-11e2-83d9-63d8f8d29f01";
 
@@ -10,6 +12,12 @@ $key = "dcc42e8e-11ca-11e2-83d9-63d8f8d29f01";
 function output_image($path) {
   header('Content-type: image/png');
   print file_get_contents($path);
+}
+
+
+function resize_image($path, $size) {
+  $cmd = CONVERT . ' ' . $path . ' -resize ' . $size . '% ' . $path;
+  exec($cmd);
 }
 
 /**
@@ -54,8 +62,6 @@ if ($args['key'] != $key) {
   exit;
 }
 
-
-
 if (array_key_exists('u', $args)) {
   $url = $args['u'];
   $file_name = $url;
@@ -92,6 +98,10 @@ if (array_key_exists('u', $args)) {
     if (filemtime($file) < (time()-(60*60))) {
       get_site_image($url, $file, $options);
     }
+  }
+
+  if (isset($args['resize'])) {
+    resize_image($file, $args['resize']);
   }
 
   if (file_exists($file)) {
