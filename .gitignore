@@ -1,0 +1,8 @@
+# eclipse project files
+.project
+.settings
+.pydevproject
+.buildpath
+
+# build files
+fabfile.py
