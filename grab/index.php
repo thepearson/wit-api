@@ -11,6 +11,9 @@ $key = "dcc42e8e-11ca-11e2-83d9-63d8f8d29f01";
  */
 function output_image($path) {
   header('Content-type: image/png');
+  header('Content-Disposition: attachment; filename="' . basename($path). '"');
+  header('Content-Transfer-Encoding: binary');
+  header('Accept-Ranges: bytes');
   print file_get_contents($path);
 }
 
