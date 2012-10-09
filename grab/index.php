@@ -84,6 +84,10 @@ if (array_key_exists('u', $args)) {
     $file_name .= $height;
   }
 
+  if (isset($args['resize'])) {
+    $file_name .= $args['resize'];
+  }
+
   $options = array(
     'format' => $format,
     'width' => $width,
@@ -93,15 +97,17 @@ if (array_key_exists('u', $args)) {
   $file = $dst_path . md5($file_name) . '.png';
   if (!file_exists($file)) {
     get_site_image($url, $file, $options);
+    if (isset($args['resize'])) {
+      resize_image($file, $args['resize']);
+    }
   }
   else {
     if (filemtime($file) < (time()-(60*60))) {
       get_site_image($url, $file, $options);
+      if (isset($args['resize'])) {
+        resize_image($file, $args['resize']);
+      }
     }
-  }
-
-  if (isset($args['resize'])) {
-    resize_image($file, $args['resize']);
   }
 
   if (file_exists($file)) {
