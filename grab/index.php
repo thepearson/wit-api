@@ -1,7 +1,7 @@
 <?php
 define('WITXVFB', "/usr/local/bin/wit-capture-xvfb");
 define('CONVERT', "/usr/bin/convert");
-define('DRUPAL_ROOT', '../../api.thepearson.co');
+define('DRUPAL_ROOT', '../../www.thepearson.co');
 
 require_once DRUPAL_ROOT . '/includes/bootstrap.inc';
 drupal_bootstrap(DRUPAL_BOOTSTRAP_DATABASE);
