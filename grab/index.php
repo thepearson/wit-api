@@ -145,7 +145,7 @@ if (array_key_exists('u', $args)) {
   }
   $file_name .= $format;
 
-  $output = 'output';
+  $output = 'png';
   if (isset($args['output'])) {
     if (!in_array($args['output'], array('png', 'jpg'))) {
       not_found("Unknown output format: " . $args['output']);
@@ -206,8 +206,6 @@ if (array_key_exists('u', $args)) {
     output_image($file);
   }
   else {
-    print $url . "\n";
-    print $file;
     not_found("Error generating a Screenshot of the uri: [" . $url . "]");
   }
   exit;
