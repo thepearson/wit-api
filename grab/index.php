@@ -1,9 +1,11 @@
 <?php
 define('WITXVFB', "/usr/local/bin/wit-capture-xvfb");
 define('CONVERT', "/usr/bin/convert");
+define('DRUPAL_ROOT', '../../api.thepearson.co');
 
-$dst_path = "/tmp/";
-$key = "dcc42e8e-11ca-11e2-83d9-63d8f8d29f01";
+require_once DRUPAL_ROOT . '/includes/bootstrap.inc';
+drupal_bootstrap(DRUPAL_BOOTSTRAP_DATABASE);
+drupal_bootstrap(DRUPAL_BOOTSTRAP_VARIABLES);
 
 /**
  * Outputs an image
@@ -23,8 +25,10 @@ function output_image($path, $in_broswer = TRUE) {
 /**
  * Resizes an image
  *
- * @param unknown_type $path
- * @param unknown_type $size
+ * @param String $path
+ *     Image path
+ * @param Integer $size
+ *     Percentage to resize
  */
 function resize_image($path, $size, $method = 'imagick') {
   if ($method == 'imagick') {
@@ -35,10 +39,14 @@ function resize_image($path, $size, $method = 'imagick') {
 }
 
 /**
+ * Grabs an image of a site
  *
- * @param unknown_type $url
- * @param unknown_type $file
- * @param unknown_type $options
+ * @param String $url
+ *     Website URI
+ * @param Srtring $file
+ *     File to save as
+ * @param array $options
+ *     Options array
  */
 function get_site_image($url, $file, $options = array()) {
   $cmd = WITXVFB . ' -s ' . escapeshellarg($url) . ' -o ' . escapeshellarg($file);
@@ -63,15 +71,49 @@ function get_site_image($url, $file, $options = array()) {
   exec($cmd);
 }
 
+
+/**
+ * Lets ensure that the provideed key
+ * is active and able to be used to grab images
+ *
+ * @param string $key
+ *     User UUID
+ */
+function is_key_valid($key) {
+  $query = db_select('node', 'n');
+  $query->condition('n.type', 'application', '=')
+    ->condition('n.status', 1, '=')
+    ->condition('n.uuid', $key, '=')
+    ->fields('n', array('nid'));
+
+  $result = $query->execute();
+  if (count($result->fetchAll()) > 0) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+
 /**
  * Output 404 Not Found
  *
  * @param String $message
+ *     Message to print to the user
  */
 function not_found($message = '') {
   header('HTTP/1.0 404 Not Found');
   print $message;
   exit;
+}
+
+$dst_path = variable_get('api_grab_temp_dir', '/tmp');
+
+if (!(bool)variable_get('api_grab_enabled', 1)) {
+  not_found('The API is currently disabled');
+}
+
+if (!is_dir($dst_path) && is_writable($dst_path)) {
+  not_found('The temporary directory is not writable');
 }
 
 $args = $_GET;
@@ -81,7 +123,7 @@ if (!array_key_exists('key', $args)) {
   not_found('Invalid client key');
 }
 
-if ($args['key'] != $key) {
+if (!is_key_valid($args['key'])) {
   not_found('Invalid client key');
 }
 
@@ -103,6 +145,13 @@ if (array_key_exists('u', $args)) {
   }
   $file_name .= $format;
 
+  $output = 'output';
+  if (isset($args['output'])) {
+    if (!in_array($args['output'], array('png', 'jpg'))) {
+      not_found("Unknown output format: " . $args['output']);
+    }
+    $output = $args['output'];
+  }
 
   $width = 1024;
   if (isset($args['width'])) {
@@ -137,7 +186,7 @@ if (array_key_exists('u', $args)) {
     'height' => $height,
   );
 
-  $file = $dst_path . md5($file_name) . '.png';
+  $file = $dst_path . '/' . md5($file_name) . '.' . $output;
   if (!file_exists($file)) {
     get_site_image($url, $file, $options);
     if (isset($args['resize'])) {
@@ -145,7 +194,7 @@ if (array_key_exists('u', $args)) {
     }
   }
   else {
-    if (filemtime($file) < (time()-(60*60))) {
+    if (filemtime($url) < (time()-(60*60))) {
       get_site_image($url, $file, $options);
       if (isset($args['resize'])) {
         resize_image($file, $args['resize']);
@@ -157,6 +206,8 @@ if (array_key_exists('u', $args)) {
     output_image($file);
   }
   else {
+    print $url . "\n";
+    print $file;
     not_found("Error generating a Screenshot of the uri: [" . $url . "]");
   }
   exit;
