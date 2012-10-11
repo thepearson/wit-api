@@ -12,8 +12,8 @@ drupal_bootstrap(DRUPAL_BOOTSTRAP_VARIABLES);
  *
  * @param unknown_type $path
  */
-function output_image($path, $in_broswer = TRUE) {
-  header('Content-type: image/png');
+function output_image($path, $output_format, $in_broswer = TRUE) {
+  header('Content-type: image/' . $output_format);
   if ($in_broswer !== TRUE) {
     header('Content-Disposition: attachment; filename="' . basename($path). '"');
   }
@@ -203,7 +203,7 @@ if (array_key_exists('u', $args)) {
   }
 
   if (file_exists($file)) {
-    output_image($file);
+    output_image($file, $output);
   }
   else {
     not_found("Error generating a Screenshot of the uri: [" . $url . "]");
